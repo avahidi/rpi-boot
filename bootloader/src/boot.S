@@ -25,11 +25,6 @@ __reset:
     cmp r0, r1
     beq 1f
 
-
-    mov r2, #'C'
-    str r2, [r4], #4
-    
-
     ldr r2, =RAM_SIZE    
     add r2, r0, r2
 2:
