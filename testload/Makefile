@@ -28,8 +28,8 @@ $(OUT).bin: $(OUT).elf
 $(OUT).elf: build Makefile $(SRC) $(LD)
 	$(CROSS_COMPILE)gcc $(CFLAGS) $(SRC) -o $(OUT).elf
 
-upload:
-	../programmer/build/prog.exe -o $(DEV) -i $(OUT).bin -a 0x00010000
+upload: all
+	../programmer/build/prog.exe -v -o $(DEV) -i $(OUT).bin -a 0x00008000
 
 #
 

@@ -37,14 +37,19 @@ struct context {
     /* input */
     char *inname;
     FILE *fp; /* file or stdin */
-    
+
     /* device */
     char *outname;
     int fd; /* device */
-    
-    uint32_t adr;        
+
+    uint32_t adr;
+
+    /* flags */
     int debug;
-    
+    int verify;
+    int dontrun;
+    int watchdog;
+
     struct buffer buffer;
 };
 
@@ -52,7 +57,7 @@ extern int comm_dev_send(struct context *p);
 extern int comm_dev_recv(struct context *p);
 extern int comm_file_recv(struct context *p);
 
-extern void process_file(struct context *p);
-extern void process_interactive(struct context *p);
+extern int process_file(struct context *p);
+extern int process_interactive(struct context *p);
 
 #endif /* __DEFS_H__ */

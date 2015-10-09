@@ -14,10 +14,11 @@ __vectors:
     b __die
     b __die
 
-
 __reset:
     /* do not disturb, please */
     cpsid ifa
+
+
 
     /* see if we need to relocate */
     ldr r0, =__vectors @@ should be here
@@ -25,7 +26,7 @@ __reset:
     cmp r0, r1
     beq 1f
 
-    ldr r2, =RAM_SIZE    
+    ldr r2, =RAM_SIZE
     add r2, r0, r2
 2:
     ldmia r1!, {r3-r6}
@@ -34,12 +35,12 @@ __reset:
     bhi 2b
 
     @@ now jump to the intended address
-    dsb sy
-    isb 
+    bl __sync
 
     ldr r0, =2f
     bx r0
 2:
+
 
     /* set stack at the end of RAM */
     ldr sp, =(RAM_SIZE + RAM_START)
@@ -70,3 +71,8 @@ __die:
 exit:
     wfi
     b exit
+
+__sync:
+    dsb sy
+    isb
+    mov pc, lr

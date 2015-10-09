@@ -12,16 +12,30 @@
 
 void show_help(char *me, int fail)
 {
-    printf("Usage: %s [-d] <-o serialdevice> [-i input file] [-a address]\n"
+    printf("Usage: %s [flags] <-o serialdevice> [-i input file] [-a address]\n"
+           "Flags are:\n"
+           "\t -n    don't run code after upload\n"
+           "\t -w    enable watchdog\n"
+           "\t -v    verify writes\n"
+           "\t -d    debug communication\n"
            , me);
     exit(fail ? 20 : 3);
 }
 
 void parse_options(struct context *c, int argc, char **argv)
 {
-    int ch, err = 0;    
-    while(!err && (ch = getopt (argc, argv, "hi:o:a:")) != -1) {
+    int ch, err = 0;
+    while(!err && (ch = getopt (argc, argv, "hwvndi:o:a:")) != -1) {
         switch(ch) {
+        case 'n':
+            c->dontrun = 1;
+            break;
+        case 'v':
+            c->verify = 1;
+            break;
+        case 'w':
+            c->watchdog = 1;
+            break;
         case 'd':
             c->debug = 1;
             break;
@@ -31,7 +45,7 @@ void parse_options(struct context *c, int argc, char **argv)
             break;
         case 'o':
             if(c->outname) err = 1;
-            c->outname = optarg;            
+            c->outname = optarg;
             break;
         case 'a':
             if(sscanf(optarg, "%x", &c->adr) != 1) {
@@ -40,7 +54,7 @@ void parse_options(struct context *c, int argc, char **argv)
                     show_help(argv[0], 1);
                 }
             }
-            break;                
+            break;
         case 'h':
             show_help(argv[0], 0);
             break;
@@ -49,46 +63,42 @@ void parse_options(struct context *c, int argc, char **argv)
             break;
         }
     }
-    if(err || !c->outname) 
-        show_help(argv[0], 1);    
+    if(err || !c->outname)
+        show_help(argv[0], 1);
 }
 
 int main(int argc , char **argv)
 {
-    int err = 1;
+    int ret = 20;
     struct termios options;
     struct context p;
-    
+
     bzero(&p, sizeof(p));
     parse_options(&p, argc, argv);
-    
-    p.fp = p.inname ? fopen(p.inname, "rb") : stdin;    
+
+    p.fp = p.inname ? fopen(p.inname, "rb") : stdin;
     if(p.fp) {
-        if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY /* | O_NDELAY*/ )) != -1) {            
+        if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY /* | O_NDELAY*/ )) != -1) {
             /* block on no data */
-            fcntl(p.fd, F_SETFL, fcntl(p.fd, F_GETFL) & ~O_NONBLOCK);            
-                        
+            fcntl(p.fd, F_SETFL, fcntl(p.fd, F_GETFL) & ~O_NONBLOCK);
+
             /* configure device */
             tcgetattr(p.fd, &options);
             cfsetispeed(&options, UART_RATE);
             cfsetospeed(&options, UART_RATE);
             options.c_cflag |= (CLOCAL | CREAD);
             if(tcsetattr(p.fd, TCSANOW, &options) != -1) {
-                if(p.inname)
-                    process_file(&p);
-                else
-                    process_interactive(&p);
-                
-                err = 0;
+                ret = ((p.inname) ? process_file(&p) : process_interactive(&p))
+                      ? 0 : 20;
             } else perror("Could not configure device");
-            
-            close(p.fd);            
+
+            close(p.fd);
         } else perror("Could not open device");
-        
+
         if(p.fp != stdin)
-            fclose(p.fp);        
+            fclose(p.fp);
     } else perror("Could not open input file");
-    
-    
-    return err ? 20 : 0;                  
+
+
+    return ret;
 }

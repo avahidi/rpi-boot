@@ -2,6 +2,8 @@
 #define __DEFS_H__
 
 #define UART_BASE 0x3f201000
+#define WDOG_BASE 0x3f100018
+
 
 #define RAM_SIZE  (2 * 1024)
 #define RAM_START (2 * 1024)
