@@ -53,6 +53,7 @@ struct context {
     struct buffer buffer;
 };
 
+extern int comm_dev_sync(struct context *p);
 extern int comm_dev_send(struct context *p);
 extern int comm_dev_recv(struct context *p);
 extern int comm_file_recv(struct context *p);

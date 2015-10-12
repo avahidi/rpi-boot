@@ -78,7 +78,8 @@ int main(int argc , char **argv)
 
     p.fp = p.inname ? fopen(p.inname, "rb") : stdin;
     if(p.fp) {
-        if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY /* | O_NDELAY*/ )) != -1) {
+        if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY | O_NDELAY )) != -1) {
+
             /* block on no data */
             fcntl(p.fd, F_SETFL, fcntl(p.fd, F_GETFL) & ~O_NONBLOCK);
 
@@ -88,8 +89,11 @@ int main(int argc , char **argv)
             cfsetospeed(&options, UART_RATE);
             options.c_cflag |= (CLOCAL | CREAD);
             if(tcsetattr(p.fd, TCSANOW, &options) != -1) {
-                ret = ((p.inname) ? process_file(&p) : process_interactive(&p))
-                      ? 0 : 20;
+
+                if(comm_dev_sync(&p)) {
+                    ret = ((p.inname) ? process_file(&p) : process_interactive(&p))
+                          ? 0 : 20;
+                } else fprintf(stderr, "Could not sync to target\n");
             } else perror("Could not configure device");
 
             close(p.fd);

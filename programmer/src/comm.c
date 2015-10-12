@@ -54,3 +54,36 @@ int comm_file_recv(struct context *p)
 {
     return buffer_fread(& p->buffer, p->fp) > -1;
 }
+
+
+int comm_dev_sync(struct context *p)
+{
+    int i, state;
+    char *din = ".......................\r";
+    char *dout = "$\05SYNC";
+    char c;
+
+    if(write(p->fd, din, strlen(din)) != strlen(din)) {
+        fprintf(stderr, "sync failed: could not write sync message\n");
+        return 0;
+    }
+
+    for(state = 0;;) {
+        i = read(p->fd, &c, 1);
+        if(i < 1) {
+            fprintf(stderr, "sync failed: could not read sync message\n");
+            return 0;
+        }
+
+        if(c  == dout[state]) {
+            state ++;
+            if(!dout[state]) {
+                read(p->fd, &c, 1); /* pass on checksum for now */
+                return 1;
+            }
+        } else {
+            state = 0;
+        }
+    }
+    return 0;
+}

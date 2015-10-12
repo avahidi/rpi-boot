@@ -101,11 +101,18 @@ int process_file(struct context *p)
 #define COPY_LENGTH 8
     char bufferw[COPY_LENGTH];
     char bufferr[COPY_LENGTH];
-
+    char *id;
     uint32_t adr0, adr;
     int i, n;
 
-    printf("Connected to '%s'...\n", cmd_id(p));
+
+    id = cmd_id(p);
+    if(id) {
+        printf("Connected to '%s'...\n", id);
+    } else {
+        printf("Communication failure\n");
+        return 0;
+    }
 
 
     cmd_set_adr(p, adr0 = adr = p->adr);

@@ -40,6 +40,8 @@ struct proto {
     int len;
     char cmd;
 
+    uint8_t rcv_checksum; // DEBUG
+
     /* state */
     union {
         uint32_t regs[5]; /* R0, R1, PSR, PC, ptr */
@@ -128,13 +130,32 @@ void proto_mem_write32(struct proto *p, uint8_t *buffer)
           (buffer[3] << 24) | (buffer[2] << 16);
 }
 
+void proto_sync(struct proto *p)
+{
+    char c;
+
+    for(;;) {
+        c = uart_read();
+        if(c == '\n' || c == '\r') break;
+    }
+
+    proto_write(1, "SYNC", 4);
+}
+
 /* read/write packet including size and checksum handling */
 int proto_read(struct proto *p)
 {
     int i, c;
     uint8_t sum;
 
-    p->cmd = uart_read();
+    for(;;) {
+        p->cmd = uart_read();
+        if(p->cmd == '.')
+            proto_sync(p);
+        else
+            break;
+    }
+
     p->len = uart_read(); /* including checksum */
 
     /* too large ? */
@@ -149,6 +170,8 @@ int proto_read(struct proto *p)
         p->data[i] = uart_read();
         sum += p->data[i];
     }
+
+    p->rcv_checksum = sum; // DEBUG
 
     /* remove & check checksum */
     p->len--;
@@ -168,8 +191,12 @@ void proto_write(int okay, uint8_t *data, int data_len)
 
 void proto_error(struct proto *p, int type)
 {
-    char t = type;
-    proto_write(0, & t, 1);
+    char err[4];
+    err[0] = type;
+    err[1] = p->cmd;
+    err[2] = p->len;
+    err[3] = p->rcv_checksum;
+    proto_write(0, type, 4);
 }
 
 void proto_okay(struct proto *p)
@@ -221,11 +248,6 @@ void proto_handle_reg(struct proto *p)
     proto_write(1, &p->regs[r], sizeof(uint32_t));
 }
 
-void proto_handle_echo(struct proto *p)
-{
-    proto_write(1, p->data, p->len);
-}
-
 void proto_handle_start(struct proto *p)
 {
     /* response first since we are not going to return */
@@ -251,7 +273,6 @@ struct proto_handler handlers[] = {
     {'g', 1, 5, proto_handle_reg},
     {'s', 0, 0, proto_handle_start},
     {'S', 0, 0, proto_handle_start},
-    {'e', 0, -1, proto_handle_echo},
     {0, 0, 0, 0 }
 };
 
