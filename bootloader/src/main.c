@@ -218,7 +218,7 @@ void proto_handle_reg(struct proto *p)
         p->regs[r] = data;
     }
 
-    proto_okay(p);
+    proto_write(1, &p->regs[r], sizeof(uint32_t));
 }
 
 void proto_handle_echo(struct proto *p)
