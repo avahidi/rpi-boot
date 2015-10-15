@@ -48,7 +48,11 @@ struct context {
     int debug;
     int verify;
     int dontrun;
-    int watchdog;
+
+#define OPTSTART_WDOG 1
+#define OPTSTART_SEC  2
+#define OPTSTART_HYP  4
+    uint8_t optstart;
 
     struct buffer buffer;
 };

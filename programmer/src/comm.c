@@ -59,8 +59,8 @@ int comm_file_recv(struct context *p)
 int comm_dev_sync(struct context *p)
 {
     int i, state;
-    char *din = ".......................\r";
-    char *dout = "$\05SYNC";
+    char *din = ".......................\r\n";
+    char *dout = "$\x05SYNC\x9a";
     char c;
 
     if(write(p->fd, din, strlen(din)) != strlen(din)) {
@@ -78,7 +78,6 @@ int comm_dev_sync(struct context *p)
         if(c  == dout[state]) {
             state ++;
             if(!dout[state]) {
-                read(p->fd, &c, 1); /* pass on checksum for now */
                 return 1;
             }
         } else {

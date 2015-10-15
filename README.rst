@@ -1,15 +1,19 @@
 
-mini-PI bootloader
+mini-Pi bootloader
 ==================
 
 The mini-pi bootloader is a minimal serial bootloader for loading the initial bare metal code into Raspberry-Pi 2.
+It supports booting into the normal & **secure world** as well as the **hypervisor mode**.
 
-**Who should use this?** People who are are experimenting with bare metal code.
+Who should use this?
+--------------------
 
-If you are playing with bare metal code and don't have access to a JTAG debugger/programmer, you will need to update the sdcard boot partition every time you change your code.
-The mini-pi bootloader allows you to update the sdcard once and perform all subsequence programming via the serial interfaces (UART0). 
+People who are experimenting with bare metal code.
 
-**Who should not use this?** 
+ 1. You need a simple way to write and run baremetal normal/secure world or hypervisor mode code.
+ 2. You don't have access to a JTAG debugger/programmer and you are getting tired of the SD-card juggling.
+
+**Who should not use this?**
 
  1. Practically everybody ;)
  2. If you are running Linux you don't need this
@@ -21,22 +25,35 @@ Usage
 -----
 The project structure is
 
- * bootloader - this is the minimal bootloader that should be written to your sdcard
- * programmer - this is the PC side software for uploading your bare metal code
- * testload - this is an example bare metal project (RPi2 "act" LED blinker, to be eaxct)
+ * bootloader/ - this is the minimal bootloader that should be written to your sdcard
+ * programmer/ - this is the PC side software for uploading your bare metal code
+ * testload/ - this is an example bare metal project (LED blink for RPi2, to be exact)
 
 For a quick start
 
- 1. insert working sdcard (e.g. Raspbian)
- 2. "make copy" (assuming Ubuntu 15.04 or higher)
- 3. insert sdcard into RPi2 and switch power on
- 4. connect RPi2 UART0 to /dev/ttyUSB0
- 5. "make upload"
+ #. insert working sdcard (e.g. Raspbian)
+ #. "make copy" (assuming Ubuntu 15.04 or higher)
+ #. insert sdcard into RPi2 and switch power on
+ #. connect RPi2 UART0 to /dev/ttyUSB0
+ #. "make upload"
+ #. Now if you change the testload project, you only need to power cycles and run "make upload" again to test your new code.
 
-Now if you change the testload project, you only need to power cycles and run "make upload" again to test your new code.
 
+If you want to copy the bootloader manually, this is what you need to do
 
-Memory layout
-~~~~~~~~~~~~~
-The bootloader is loaded at 0x8000 but relocates itself to 0x0800 to allow user binaries to be loaded to the default 0x8000 address.
+  #. "make"  (build the project) 
+  #. copy bootloader/build/bootld.img to the boot partition as kernel7.img
+  #. rename old kernel7.img to kernel7.img_OLD (repeat for kernel.img)
+  #. add "kernel_old=1" to config.txt on the same partition.
+  #. comment out any lines starting with "kernel=" in the same file
 
+The programmer 
+--------------
+For information about the programmer, see programmer/README.rst
+
+A simple bare metal program for testing is included, see testload/README.rst.
+
+Technical details
+-----------------
+
+For the technical details see bootloader/README.rst

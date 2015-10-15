@@ -15,9 +15,12 @@ void show_help(char *me, int fail)
     printf("Usage: %s [flags] <-o serialdevice> [-i input file] [-a address]\n"
            "Flags are:\n"
            "\t -n    don't run code after upload\n"
-           "\t -w    enable watchdog\n"
+           "\t -W    start execution with watchdog enabled\n"
+           "\t -H    start execution in hyp mode\n"
+           "\t -S    start execution in secure mode\n"
            "\t -v    verify writes\n"
            "\t -d    debug communication\n"
+           "\t -h    help: shows this message\n"
            , me);
     exit(fail ? 20 : 3);
 }
@@ -25,7 +28,7 @@ void show_help(char *me, int fail)
 void parse_options(struct context *c, int argc, char **argv)
 {
     int ch, err = 0;
-    while(!err && (ch = getopt (argc, argv, "hwvndi:o:a:")) != -1) {
+    while(!err && (ch = getopt (argc, argv, "HWShvndi:o:a:")) != -1) {
         switch(ch) {
         case 'n':
             c->dontrun = 1;
@@ -33,9 +36,16 @@ void parse_options(struct context *c, int argc, char **argv)
         case 'v':
             c->verify = 1;
             break;
-        case 'w':
-            c->watchdog = 1;
+        case 'W':
+            c->optstart |= OPTSTART_WDOG;
             break;
+        case 'H':
+            c->optstart |= OPTSTART_HYP;
+            break;
+        case 'S':
+            c->optstart |= OPTSTART_SEC;
+            break;
+
         case 'd':
             c->debug = 1;
             break;
@@ -76,7 +86,13 @@ int main(int argc , char **argv)
     bzero(&p, sizeof(p));
     parse_options(&p, argc, argv);
 
-    p.fp = p.inname ? fopen(p.inname, "rb") : stdin;
+    if(!p.inname) {
+        p.debug = 1;
+        p.fp = stdin;
+    } else {
+        p.fp = fopen(p.inname, "rb");
+    }
+
     if(p.fp) {
         if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY | O_NDELAY )) != -1) {
 

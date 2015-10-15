@@ -1,6 +1,6 @@
 
 SRC=$(wildcard src/*.c)
-INC=$(wildcard src/*.h) 
+INC=$(wildcard src/*.h)
 OUT=build/prog
 
 all: $(OUT).exe
@@ -13,7 +13,7 @@ $(OUT).exe: build Makefile $(SRC) $(INC)
 
 test: all
 	$(OUT).exe -o /dev/ttyUSB0
-	
+
 #
 
 build:

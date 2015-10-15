@@ -22,6 +22,12 @@ __reset:
     ldr r0, =__vectors
     mcr p15, 0, r0, c12, c0, 0
 
+    /* SCTLR: enable I and C caches */
+    mrc 15, 0, r0, c1, c0, 0
+    orr r0, r0, #0x0004
+    orr r0, r0, #0x1000
+    mcr 15, 0, r0, c1, c0, 0
+
     /* clear bss */
     ldr r0, =__bss_start__
     ldr r1, =__bss_end__
@@ -40,6 +46,7 @@ __reset:
     b exit
 
 __die:
+
 exit:
     wfi
     b exit

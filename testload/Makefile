@@ -7,7 +7,7 @@ SRC= $(wildcard src/*.c) $(wildcard src/*.S)
 LD= src/linker.ld
 OUT=build/testload
 
-CFLAGS += -mcpu=cortex-a7 
+CFLAGS += -mcpu=cortex-a7
 #CFLAGS += -mcpu=arm1176jz-s
 
 CFLAGS += -std=c99 -T $(LD)
@@ -29,7 +29,7 @@ $(OUT).elf: build Makefile $(SRC) $(LD)
 	$(CROSS_COMPILE)gcc $(CFLAGS) $(SRC) -o $(OUT).elf
 
 upload: all
-	../programmer/build/prog.exe -v -o $(DEV) -i $(OUT).bin -a 0x00008000
+	../programmer/build/prog.exe -v -o $(DEV) -i $(OUT).bin -a 0x00008000 -W
 
 #
 

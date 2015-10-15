@@ -17,6 +17,9 @@
 #define adr_t uint32_t
 #define size_t uint32_t
 
+#define __naked __attribute__((naked))
+
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __DEFS_H__ */

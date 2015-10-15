@@ -45,7 +45,8 @@ char *cmd_id(struct context *p)
 int cmd_start(struct context *p)
 {
     struct buffer *b = &p->buffer;
-    buffer_reset(b, p->watchdog ? 'S' : 's');
+    buffer_reset(b, 's');
+    buffer_putc(b, p->optstart);
     return cmd_send(p);
 }
 
@@ -105,7 +106,6 @@ int process_file(struct context *p)
     uint32_t adr0, adr;
     int i, n;
 
-
     id = cmd_id(p);
     if(id) {
         printf("Connected to '%s'...\n", id);
@@ -148,7 +148,9 @@ int process_file(struct context *p)
     printf("\n");
 
     if(!p->dontrun) {
-        printf("Starting at 0x%08x...", adr0);
+        printf("Starting at 0x%08x (options=%02x) ...\n",
+               adr0, 0xFF & p->optstart);
+
         cmd_set_reg(p, REG_PC, adr0);
         printf("%s\n", cmd_start(p) ? "DONE" : "FAILED");
     }
@@ -159,7 +161,6 @@ int process_file(struct context *p)
 int process_interactive(struct context *p)
 {
     int n;
-    p->debug = 1;
 
     for(;;) {
         fprintf(stdout, "> ");
@@ -168,7 +169,7 @@ int process_interactive(struct context *p)
         comm_file_recv(p);
 
         if(p->buffer.cmd == 'q' && p->buffer.len == 0)
-            return;
+            return 1;
 
         n = p->buffer.len;
         util_recode(p->buffer.data, &n);

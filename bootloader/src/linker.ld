@@ -1,13 +1,21 @@
 
 MEMORY
 {
-    RAM (rwx) : ORIGIN = 2 * 1024, LENGTH = 2 * 1024
+    RAM (rwx) : ORIGIN = 0 * 1024, LENGTH = 4 * 1024
 }
 
 SECTIONS
 {
     .text : {
-        *.o (.boot)
+        /* secure boot */
+        *.o (.boot-sec)
+    
+        /* make sure secure boot doesnt exceeds this limit */
+        . = 0xEC; 
+
+        /* normal world code */
+        . = 2048; /* NORMAL_START, RPi2 magic limit :(*/
+        *.o (.boot-norm)
         *.o (.text)
     } > RAM
 

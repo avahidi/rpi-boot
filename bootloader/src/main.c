@@ -17,7 +17,7 @@ struct wdog {
 };
 
 
-#define UART_CLOCK 3000000
+#define UART_CLOCK  3000000
 #define UART_RATE 115200
 
 struct pl011 {
@@ -38,9 +38,9 @@ struct proto {
     /* input */
     uint8_t data[PROTO_SIZE_MAX];
     int len;
-    char cmd;
-
-    uint8_t rcv_checksum; // DEBUG
+    uint8_t cmd;
+    uint8_t sum;
+    uint8_t cnt;
 
     /* state */
     union {
@@ -130,31 +130,23 @@ void proto_mem_write32(struct proto *p, uint8_t *buffer)
           (buffer[3] << 24) | (buffer[2] << 16);
 }
 
-void proto_sync(struct proto *p)
-{
-    char c;
-
-    for(;;) {
-        c = uart_read();
-        if(c == '\n' || c == '\r') break;
-    }
-
-    proto_write(1, "SYNC", 4);
-}
 
 /* read/write packet including size and checksum handling */
+
+void proto_sync(struct proto *p); /* forward */
+
 int proto_read(struct proto *p)
 {
     int i, c;
     uint8_t sum;
 
-    for(;;) {
+    p->cnt ++;
+
+    do {
         p->cmd = uart_read();
         if(p->cmd == '.')
             proto_sync(p);
-        else
-            break;
-    }
+    } while(p->cmd == '.' || p->cmd == '\r' || p->cmd == '\n');
 
     p->len = uart_read(); /* including checksum */
 
@@ -171,7 +163,7 @@ int proto_read(struct proto *p)
         sum += p->data[i];
     }
 
-    p->rcv_checksum = sum; // DEBUG
+    p->sum = sum; // for debugging
 
     /* remove & check checksum */
     p->len--;
@@ -191,17 +183,30 @@ void proto_write(int okay, uint8_t *data, int data_len)
 
 void proto_error(struct proto *p, int type)
 {
-    char err[4];
+    uint8_t err[5];
     err[0] = type;
     err[1] = p->cmd;
     err[2] = p->len;
-    err[3] = p->rcv_checksum;
-    proto_write(0, type, 4);
+    err[3] = p->sum;
+    err[4] = p->cnt;
+    proto_write(0, err, sizeof(err));
 }
 
 void proto_okay(struct proto *p)
 {
     proto_write(1, 0, 0);
+}
+
+void proto_sync(struct proto *p)
+{
+    char c;
+
+    for(;;) {
+        c = uart_read();
+        if(c == '\n' || c == '\r') break;
+    }
+
+    proto_write(1, "SYNC", 4);
 }
 
 /* the handlers */
@@ -245,17 +250,25 @@ void proto_handle_reg(struct proto *p)
         p->regs[r] = data;
     }
 
-    proto_write(1, &p->regs[r], sizeof(uint32_t));
+    proto_write(1, (uint8_t *)&p->regs[r], sizeof(uint32_t));
 }
 
-void proto_handle_start(struct proto *p)
+void __naked proto_handle_start(struct proto *p)
 {
     /* response first since we are not going to return */
     proto_okay(p);
 
-    /* is this 's' or 'S' command? if 'S', enable watchdog */
-    if(p->cmd == 'S')
+    /* BIT0: enable watchdog ? */
+    if(p->data[0] & 0x01)
         wdog_enable();
+
+    /* BIT1 (or BIT2 but just to switch to hyp mode) switch to secure mode */
+    if(p->data[0] & 0x06)
+        __smc(1);
+
+    /* BIT2: switch to hyp  mode*/
+    if(p->data[0] & 0x04)
+        p->regs[2] = 0x1D6; /* SPSR = hyp mode. I, F & A set */
 
     /* read guest registers and start it */
     __asm__ volatile(
@@ -271,8 +284,7 @@ struct proto_handler handlers[] = {
     {'w', 1, -1, proto_handle_write},
     {'r', 1, -1, proto_handle_read},
     {'g', 1, 5, proto_handle_reg},
-    {'s', 0, 0, proto_handle_start},
-    {'S', 0, 0, proto_handle_start},
+    {'s', 1, 1, proto_handle_start},
     {0, 0, 0, 0 }
 };
 
@@ -324,6 +336,7 @@ void main()
     p.regs[2] = tmp;
     p.regs[3] = RAM_START + RAM_SIZE;
     p.ptr = (uint32_t *) p.regs[3];
+
 
     /* start the command-response loop */
     for(;;) {
