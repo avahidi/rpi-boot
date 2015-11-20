@@ -2,7 +2,7 @@
 The mini-Pi bootloader
 ======================
 
-This the mini-pi bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7). 
+This is the mini-pi bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7). 
 It was designed with simplicity in mind, and requires approximately 2KB of memory.
 
 
@@ -18,21 +18,21 @@ See the START command for more information
 Memory layout
 -------------
 
-+---------------+----------------+
-| Address       | Use            |
-+===============+================+
-| 0x8000-....   | user code area |
-+---------------+----------------+
-| 0x1000-0x8000 | *UNUSED*       |
-+---------------+----------------+
-| 0x0800-0x1000 | bootloader     |
-+---------------+----------------+
-| 0x0100-0x0800 | RPi2 internal  |
-+---------------+----------------+
-| 0x0000-0x0100 | secure boot    |
-+---------------+----------------+
++---------------+----------------+--------------------+
+| Address       | Use            | Notes              |
++===============+================+====================+
+| 0x8000-....   | user code area | default location   |
++---------------+----------------+--------------------+
+| 0x1000-0x8000 | *UNUSED*       |                    |
++---------------+----------------+--------------------+
+| 0x0800-0x1000 | bootloader     |                    |
++---------------+----------------+--------------------+
+| 0x0100-0x0800 | RPi2 internal  | modified by GPU    |
++---------------+----------------+--------------------+
+| 0x0000-0x0100 | secure boot    |                    |
++---------------+----------------+--------------------+
 
-If no other instructions are given, the loaded code is assumed to start at 0x8000.
+If no other instructions are given user code is assumed to start 0x8000.
 
 
 Multi-core bringup
@@ -73,6 +73,13 @@ Note that
  #. The checksum is the additive inverse, i.e. the sum of all elements including the checksum should be zero.
  #. The length field includes data and the checksum.
  #. Data order is LSB first ( e.g. 0x123 is represented as [0x23, 0x01] )
+
+Valid commands are
+
+ * g - update and read register
+ * w - write to target
+ * r - read from target
+ * s - start
 
 The response code is one of the following
 
