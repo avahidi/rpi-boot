@@ -20,7 +20,7 @@ int cmd_send(struct context *p)
             return 0;
         }
 
-        if(p->buffer.len >= 1 && p->buffer.cmd == '!' && p->buffer.data[0] == 'f') {
+        if(p->packet.len >= 1 && p->packet.cmd == '!' && p->packet.data[0] == 'f') {
             printf("Failed to send data, will try again (%d)...\n", i);
             // nanosleep(50000);
         } else {
@@ -28,42 +28,42 @@ int cmd_send(struct context *p)
         }
     }
 
-    if(p->buffer.cmd == '$')
+    if(p->packet.cmd == '$')
         return 1;
 
-    fprintf(stderr, "Failed or bad response: %c\n", p->buffer.data[0]);
+    fprintf(stderr, "Failed or bad response: %c\n", p->packet.data[0]);
     return 0;
 }
 
 char *cmd_id(struct context *p)
 {
-    struct buffer *b = &p->buffer;
-    buffer_reset(b, '?');
+    struct packet *b = &p->packet;
+    packet_reset(b, '?');
     return cmd_send(p) ? & b->data[0] : 0;
 }
 
 int cmd_start(struct context *p)
 {
-    struct buffer *b = &p->buffer;
-    buffer_reset(b, 's');
-    buffer_putc(b, p->optstart);
+    struct packet *b = &p->packet;
+    packet_reset(b, 's');
+    packet_putc(b, p->optstart);
     return cmd_send(p);
 }
 
 int cmd_set_reg(struct context *p, enum reg reg, uint32_t data)
 {
-    struct buffer *b = &p->buffer;
-    buffer_reset(b, 'g');
-    buffer_putc(b, reg);
-    buffer_puti(b, data);
+    struct packet *b = &p->packet;
+    packet_reset(b, 'g');
+    packet_putc(b, reg);
+    packet_puti(b, data);
     return cmd_send(p);
 }
 
 int cmd_get_reg(struct context *p, enum reg reg)
 {
-    struct buffer *b = &p->buffer;
-    buffer_reset(b, 'g');
-    buffer_putc(b, reg);
+    struct packet *b = &p->packet;
+    packet_reset(b, 'g');
+    packet_putc(b, reg);
     return cmd_send(p);
 }
 
@@ -74,19 +74,19 @@ int cmd_set_adr(struct context *p, uint32_t adr)
 
 int cmd_write(struct context *p, char *data, int len)
 {
-    struct buffer *b = &p->buffer;
-    buffer_reset(b, 'w');
-    buffer_putci(b, data, len);
+    struct packet *b = &p->packet;
+    packet_reset(b, 'w');
+    packet_putci(b, data, len);
     return cmd_send(p);
 }
 
 int cmd_read(struct context *p, char *data, int len)
 {
-    struct buffer *b = &p->buffer;
+    struct packet *b = &p->packet;
     int ret;
 
-    buffer_reset(b, 'r');
-    buffer_putc(b, len);
+    packet_reset(b, 'r');
+    packet_putc(b, len);
 
     ret = cmd_send(p);
     if(ret && b->len == len) {
@@ -168,15 +168,15 @@ int process_interactive(struct context *p)
 
         comm_file_recv(p);
 
-        if(p->buffer.cmd == 'q' && p->buffer.len == 0)
+        if(p->packet.cmd == 'q' && p->packet.len == 0)
             return 1;
 
-        n = p->buffer.len;
-        util_recode(p->buffer.data, &n);
-        p->buffer.len = n;
+        n = p->packet.len;
+        util_recode(p->packet.data, &n);
+        p->packet.len = n;
 
 
-        if(p->buffer.len > -1) {
+        if(p->packet.len > -1) {
             cmd_send(p);
 
         }

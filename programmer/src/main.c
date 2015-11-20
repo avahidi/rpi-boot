@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-
 #include <getopt.h>
 
 #include "defs.h"
@@ -80,6 +79,7 @@ void parse_options(struct context *c, int argc, char **argv)
 int main(int argc , char **argv)
 {
     int ret = 20;
+    int fd;
     struct termios options;
     struct context p;
 
@@ -94,18 +94,20 @@ int main(int argc , char **argv)
     }
 
     if(p.fp) {
-        if( (p.fd = open(p.outname, O_RDWR | O_NOCTTY | O_NDELAY )) != -1) {
+        if( (fd = open(p.outname, O_RDWR | O_NOCTTY | O_NDELAY  )) != -1) {
+
+            buffer_init(&p.buffer, fd);
 
             /* block on no data */
-            fcntl(p.fd, F_SETFL, fcntl(p.fd, F_GETFL) & ~O_NONBLOCK);
+            fcntl(fd, F_SETFL, 0); // fcntl(p.fd, F_GETFL) & ~O_NONBLOCK);
 
             /* configure device */
-            tcgetattr(p.fd, &options);
+            tcgetattr(fd, &options);
             cfsetispeed(&options, UART_RATE);
             cfsetospeed(&options, UART_RATE);
             options.c_cflag |= (CLOCAL | CREAD);
-            if(tcsetattr(p.fd, TCSANOW, &options) != -1) {
 
+            if(tcsetattr(fd, TCSANOW, &options) != -1) {
                 if(comm_dev_sync(&p)) {
                     ret = ((p.inname) ? process_file(&p) : process_interactive(&p))
                           ? 0 : 20;
