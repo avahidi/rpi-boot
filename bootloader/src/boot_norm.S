@@ -10,26 +10,43 @@
      * It is placed somewhere around 0x800 because it for some reason
      * doesn't work anywhere else due to undocumented boot ROM operation.
      *
-     * A very personal note: stupidies like this is way  we need the 
+     * A very personal note: stupidies like this is why we need the
      * ARM Trused Firmware project. Standard boot is the only way to go!
      */
 
 __vectors:
     b __reset
-    b __die
-    b __die
-    b __die
-    b __die
+    b __undef
+    b __swi
+    b __pabort
+    b __dabort
     nop
-    b __die
+    b __irq
+    b __fiq
+
+__undef:
+__swi:
+__pabort:
+__dabort:
+__irq:
+__fiq:
+    /* just die ... */
+__die:
+    wfe
     b __die
 
 __reset:
     /* do not disturb, please */
     cpsid ifa
 
-    /* set stack at the end of RAM */
-    ldr sp, =(RAM_SIZE + RAM_START)
+    /* primary CPU ? */
+    mrc p15, 0, r0, c0, c0, 5
+    and r0, r0, #3
+    cmp r0, #0
+    bne __boot_secondary
+
+    /* set temp stack */
+    ldr sp, =__tmp_stack_top__
 
     /* set interrupt vector base, just in case */
     ldr r0, =__vectors
@@ -47,13 +64,37 @@ __reset:
 
     /* jump to main */
     bl main
-    b sleeping
+    b __die
 
-__die:
-    /* just go to sleep */
-sleeping:
-    wfi
-    b sleeping
+
+__boot_secondary: /* CPU# in r0 */
+
+    /* clear mailbox 3 of this CPU */
+    ldr r5, =0x4000008c
+    mov r3, #0
+    str r3, [r5, r0, lsl #4]
+    dsb
+
+    /* wait for mailbox to be non-zero */
+    ldr r5, =0x400000cc
+1:
+    wfe
+
+    ldr r4, [r5, r0, lsl #4]
+    cmp r4, r3
+    beq 1b
+
+    str r4, [r5, r0, lsl #4]
+    dsb
+
+    /* switch to correct PSR */
+    mov r0, #1
+    ldr r1, =cpu0_psr
+    ldr r1, [r1]
+    smc #0
+
+    /* and jump to the entry */
+    bx r4
 
     /* just a monitor call wrapper */
 __smc:

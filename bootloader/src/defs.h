@@ -6,12 +6,10 @@
 #define WDOG_BASE 0x3f100018
 
 
-#define RAM_SIZE  (0 * 1024)
-#define RAM_START (4 * 1024)
+#define RAM_SIZE  (4 * 1024)
+#define RAM_START (0 * 1024)
 
-#define SECURE_BOOT 0
-#define ATAGS_START 0x100
-#define NORMAL_BOOT 0x800
+#define NORMAL_BOOT (RAM_START + 0x800)
 
 #define CNTFRQ 19200000
 
@@ -33,7 +31,9 @@
 #define __naked __attribute__((naked))
 #define __weak __attribute__((weak))
 
-extern uint32_t __smc(uint32_t r0);
+extern uint32_t __smc(uint32_t op, uint32_t data);
+extern uint32_t cpu0_psr;
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __DEFS_H__ */

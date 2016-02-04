@@ -8,10 +8,9 @@ SECTIONS
 {
     .text : {
         /* secure boot */
-        *.o (.boot-sec)
-    
+        *.o (.boot-sec-low)
         /* make sure secure boot doesnt exceeds this limit */
-        . = 0xEC; 
+        . = 0xEC;
 
         /* normal world code */
         . = 2048; /* NORMAL_START, RPi2 magic limit :(*/
@@ -40,6 +39,11 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
+    .stack ALIGN(8) : {
+        __tmp_stack_bottom__ = .;
+        . += 512;
+        __tmp_stack_top__ = .;
+    }
     /* crap */
     /DISCARD/ : {
         *(.note*)

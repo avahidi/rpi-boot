@@ -2,8 +2,8 @@
 The mini-Pi bootloader
 ======================
 
-This is the mini-pi bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7). 
-It was designed with simplicity in mind, and requires approximately 2KB of memory.
+This is the mini-pi bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7).
+It was designed with simplicity in mind.
 
 
 The Watchdog
@@ -41,10 +41,11 @@ Multi-core bringup
 CPU power-on is performed by writing the requested entry point to the 3rd mailbox of the target CPU.
 Essentially, this works similar to the original RPi2 boot ROM, with the following minor differences:
 
- #. Target CPU is always awaken in Normal Supervisor mode.
+ #. Target CPU is always awaken in the same mode as the first core.
+ #. Target is NOT awaken in Secure World (even if the first core was).
  #. R0 and R1 contain no valid information at boot
  #. You must emit a CPU event (SEV) after writing to the mailbox (and don't forget the synchronization barrier)
-
+ #. See the test load project for an example
 
 
 
@@ -60,7 +61,7 @@ Normally you should not care about this since the programmer handles this for yo
 Command / response format
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The general command and response format is 
+The general command and response format is
 
 :COMMAND: [command] [N = payload length] [N-1 bytes of data] [checksum]
 :RESPONSE: [response code] [N = payload length] [ N-1 bytes of data] [checksum].
@@ -85,7 +86,7 @@ The response code is one of the following
 
  * $ -  success, no error
  * ! - general error
- * u - unknown error 
+ * u - unknown error
  * p - command parameter error
  * f - command format error
  * s - command size error
@@ -98,7 +99,7 @@ The ABOUT command is used to identify the board and has the following format:
 
 :COMMAND: ? 1 [checksum]
 :RESPONSE: $ 15 "minipi bootld" [checksum]
- 
+
 
 The REGISTER command
 ~~~~~~~~~~~~~~~~~~~~
@@ -110,12 +111,12 @@ The bootloader has five different registers, one of which is used for addressing
  2. PSR, this corresponds to targets CPSR at boot
  3. PC, this corresponds to targets PC at boot
  4. ADR, this is the address used in read and write commands
- 
+
 You may read a register using the REGISTER command
 
 :COMMAND: g 2 [register number] [checksum]
 :RESPONSE: $ 5 [32-bit register value] [checksum]
- 
+
 You may also write to a register
 
 :COMMAND: g [3-6] [register number] [1-4 bytes of register content] [checksum]
@@ -157,10 +158,10 @@ The bits in option have the following meaning
  * Bit 0: enable the watchdog
  * Bit 1: start execution in Secure World
  * Bit 2: start execution in HYP mode (this overrides any previous writes to PSR)
- 
+
 Note that
 
   #. Execution starts at the address in the PC register (see REGISTER command)
-  #. Execution starts in the mode specified by the PSR register (see REGISTER command)  
+  #. Execution starts in the mode specified by the PSR register (see REGISTER command)
   #. If successful, you will not be able to execute any more commands after this
   #. If the watchdog is enabled, the device will reboot back into the bootloader after 16s.

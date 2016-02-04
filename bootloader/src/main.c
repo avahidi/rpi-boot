@@ -61,6 +61,7 @@ struct proto_handler {
 };
 
 uint8_t uart_sum = 0;
+uint32_t cpu0_psr = 0x1D3;
 
 /*
  * UART
@@ -144,6 +145,7 @@ int proto_read(struct proto *p)
 
     do {
         p->cmd = uart_read();
+
         if(p->cmd == '.')
             proto_sync(p);
     } while(p->cmd == '.' || p->cmd == '\r' || p->cmd == '\n');
@@ -262,21 +264,31 @@ void __naked proto_handle_start(struct proto *p)
     if(p->data[0] & 0x01)
         wdog_enable();
 
-    /* BIT1 (or BIT2 but just to switch to hyp mode) switch to secure mode */
-    if(p->data[0] & 0x06)
-        __smc(1);
-
-    /* BIT2: switch to hyp  mode*/
+    /* BIT2: switch to hyp mode*/
     if(p->data[0] & 0x04)
-        p->regs[2] = 0x1D6; /* SPSR = hyp mode. I, F & A set */
+        p->regs[2] = 0x1DA; /* SPSR = hyp mode. I, F & A set */
 
-    /* read guest registers and start it */
+    /* BIT1 switch to secure mode */
+    else if(p->data[0] & 0x02)
+        __smc(0, 1);
+
+    /* save this for other cores */
+    cpu0_psr = p->regs[2];
+
+    /* change mode and start it */
     __asm__ volatile(
-                     "mov r10, %0\n"
-                     "ldm r10, {r0-r2, lr}\n"
-                     "msr spsr, r2\n"
-                     "movs pc, lr\n"
-                     :: "r"(& p->regs[0]));
+                     /* save p->regs */
+                     "mov r12, %0\n"
+
+                     /* change mode to the given CPSR */
+                     "mov r0, #1\n"
+                     "ldr r1, [r12, #8]\n"
+                     "smc #0\n"
+
+                     /* get R0, R1 and LR and jump to LR */
+                     "ldm r12, {r0-r2, lr}\n"
+                     "mov pc, lr\n"
+                     :: "r"(&p->regs[0]));
 }
 
 struct proto_handler handlers[] = {
@@ -336,7 +348,6 @@ void main()
     p.regs[2] = tmp;
     p.regs[3] = RAM_START + RAM_SIZE;
     p.ptr = (uint32_t *) p.regs[3];
-
 
     /* start the command-response loop */
     for(;;) {
