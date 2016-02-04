@@ -107,8 +107,17 @@ int main(int argc , char **argv)
             cfsetospeed(&options, UART_RATE);
             options.c_cflag |= (CLOCAL | CREAD);
 
+            /* raw mode seems to work best */
+            options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                                 | INLCR | IGNCR | ICRNL | IXON);
+            options.c_oflag &= ~OPOST;
+            options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+            options.c_cflag &= ~(CSIZE | PARENB);
+            options.c_cflag |= CS8;
+
             if(tcsetattr(fd, TCSANOW, &options) != -1) {
                 if(comm_dev_sync(&p)) {
+                    printf("Synchronized...\n");
                     ret = ((p.inname) ? process_file(&p) : process_interactive(&p))
                           ? 0 : 20;
                 } else fprintf(stderr, "Could not sync to target\n");
