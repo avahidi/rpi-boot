@@ -32,6 +32,12 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
+    .stack ALIGN(16) : {
+        __stack_bottom__ = .;
+        . += 4 * 512;
+        __stack_top__ = .;
+    }
+
     /* crap */
     /DISCARD/ : {
         *(.note*)

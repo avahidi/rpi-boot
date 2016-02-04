@@ -31,7 +31,7 @@ The project structure is
 
 For a quick start
 
- #. insert working sdcard (e.g. Raspbian)
+ #. insert working sdcard with the correct partitions (e.g. Raspbian)
  #. "make copy" (assuming Ubuntu 15.04 or higher)
  #. insert sdcard into RPi2 and switch power on
  #. connect RPi2 UART0 to /dev/ttyUSB0
@@ -41,13 +41,13 @@ For a quick start
 
 If you want to copy the bootloader manually, this is what you need to do
 
-  #. "make"  (build the project) 
+  #. "make"  (build the project)
   #. copy bootloader/build/bootld.img to the boot partition as kernel7.img
   #. rename old kernel7.img to kernel7.img_OLD (repeat for kernel.img)
   #. add "kernel_old=1" to config.txt on the same partition.
   #. comment out any lines starting with "kernel=" in the same file
 
-The programmer 
+The programmer
 --------------
 For information about the programmer, see programmer/README.rst
 

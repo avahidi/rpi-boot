@@ -4,6 +4,7 @@
 
 
 #define GPIO_BASE 0x3F200000
+#define MBOX_BASE 0x40000080
 
 #define RAM_START 0x00080000
 #define RAM_SIZE (1024 * 16)
@@ -19,6 +20,9 @@
 
 #define __naked __attribute__((naked))
 
+extern int __cpuid();
+extern void __sev();
+extern void __reset;
 
 #endif /* __ASSEMBLER__ */
 

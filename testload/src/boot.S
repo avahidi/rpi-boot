@@ -2,7 +2,11 @@
 #include "defs.h"
 
     .section .boot, "ax"
-    .global exit
+    .global __die
+    .global __cpuid
+    .global __sev
+    .global __reset
+
 
 __vectors:
     b __reset
@@ -16,9 +20,6 @@ __vectors:
 
 
 __reset:
-    /* set stack at the end of RAM */
-    ldr sp, =(RAM_SIZE + RAM_START)
-
     ldr r0, =__vectors
     mcr p15, 0, r0, c12, c0, 0
 
@@ -28,6 +29,20 @@ __reset:
     orr r0, r0, #0x1000
     mcr 15, 0, r0, c1, c0, 0
 
+    /* set stack based on what CPU this is: */
+    mrc p15, 0, r1, c0, c0, 5
+    ands r1, r1, #3
+
+    ldr r0, =__stack_top__
+    lsl r2, r1, #9 /* 512 bytes per cpu ? */
+    sub sp, r0, r2
+
+    /* bypass global init if secondary core */
+    cmp r1, #0
+    bne init_end
+
+
+init_start:
     /* clear bss */
     ldr r0, =__bss_start__
     ldr r1, =__bss_end__
@@ -41,12 +56,21 @@ __reset:
     bhi 1b
 
 
+init_end:
     /* jump to main */
     bl main
-    b exit
+    b __die
 
 __die:
+    wfe
+    b __die
 
-exit:
-    wfi
-    b exit
+
+__cpuid:
+    mrc p15, 0, r0, c0, c0, 5
+    ands r0, r0, #3
+    mov pc, lr
+
+__sev:
+    sev
+    mov pc, lr
