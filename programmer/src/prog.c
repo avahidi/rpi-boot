@@ -99,7 +99,7 @@ int cmd_read(struct context *p, char *data, int len)
 
 int process_file(struct context *p)
 {
-#define COPY_LENGTH 8
+#define COPY_LENGTH 28
     char bufferw[COPY_LENGTH];
     char bufferr[COPY_LENGTH];
     char *id;

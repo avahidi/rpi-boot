@@ -37,7 +37,7 @@ copy: all
 	-mv $(BOOT)/kernel.img $(BOOT)/kernel.img_DISABLED
 	-mv $(BOOT)/kernel7.img $(BOOT)/kernel7.img_DISABLED
 	-cp -n $(BOOT)/config.txt $(BOOT)/config.txt.OLD
-	cat $(BOOT)/config.txt.OLD | grep -v "kernel" > $(BOOT)/config.txt
+	sed "/^kernel/d" -i  $(BOOT)/config.txt
 	echo "kernel=bootld.bin" >> $(BOOT)/config.txt
 	echo "kernel_old=1" >> $(BOOT)/config.txt
 
