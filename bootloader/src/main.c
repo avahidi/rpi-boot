@@ -52,6 +52,27 @@ struct proto {
     };
 };
 
+
+struct gpio {
+    uint32_t sel[6];
+    uint32_t unused0;
+    uint32_t set[2];
+    uint32_t unused1;
+    uint32_t clr[2];
+    /* ... */
+};
+
+enum gpio_sel {
+    GPIO_IN = 0,
+    GPIO_OUT,
+    GPIO_ALT5,
+    GPIO_ALT4,
+    GPIO_ALT0,
+    GPIO_ALT1,
+    GPIO_ALT2,
+    GPIO_ALT3
+};
+
 typedef void (*proto_callback)(struct proto *p);
 
 struct proto_handler {
@@ -62,6 +83,73 @@ struct proto_handler {
 
 uint8_t uart_sum = 0;
 uint32_t cpu0_psr = 0x1D3;
+
+/*
+ * GPIO
+ */
+
+void gpio_sel(int pin, enum gpio_sel func)
+{
+    volatile struct gpio *_gpio = (struct gpio *) GPIO_BASE;
+    const int index = pin / 10;
+    const int shift = (pin - index * 10) * 3;
+    _gpio->sel[index] = (func << shift) | (_gpio->sel[index] & ~(7 << shift));
+}
+
+void gpio_set(int pin, int val)
+{
+    volatile struct gpio *_gpio = (struct gpio *) GPIO_BASE;
+    const int index = pin >> 5;
+    const int shift = pin & 31;
+
+    if(val)
+        _gpio->set[index] = 1UL << shift;
+    else
+        _gpio->clr[index] = 1UL << shift;
+}
+
+
+void jtag_init()
+{
+    /* configure JTAG pins */
+#if 1
+    /* upper section of the GPIO connector */
+    gpio_sel(22, GPIO_ALT4); /* 22 -> TRST */
+    gpio_sel(4 , GPIO_ALT5); /*  4 -> TDI  */
+    gpio_sel(27, GPIO_ALT4); /* 27 -> TMS  */
+    gpio_sel(25, GPIO_ALT4); /* 25 -> TCK  */
+    gpio_sel(24, GPIO_ALT4); /* 24 -> TDO  */
+#else
+    /* mostly the lower section of the GPIO connector */
+    gpio_sel(22, GPIO_ALT4); /* 22 -> TRST */
+    gpio_sel(26, GPIO_ALT4); /* 26 -> TDI  */
+    gpio_sel(5 , GPIO_ALT5); /*  5 -> TDO  */
+    gpio_sel(6 , GPIO_ALT5); /*  6 -> RTCK */
+    gpio_sel(12, GPIO_ALT5); /* 12 -> TMS  */
+    gpio_sel(13, GPIO_ALT5); /* 13 -> TCK  */
+#endif
+}
+
+
+void debug_init()
+{
+    volatile struct gpio *_gpio = (struct gpio *) GPIO_BASE;
+    int i;
+    uint32_t tmp;
+
+    /* wiggle the LED to show we are allive */
+#define GPIO_LED 47
+    gpio_sel(GPIO_LED, GPIO_OUT);
+    for(i = 16; i ; --i) {
+        /* simple delay */
+        tmp = 1UL << 18;
+        while(--tmp) __asm__ volatile("nop");
+
+        /* toggle LED */
+        gpio_set(GPIO_LED, i & 1);
+    }
+    gpio_sel(GPIO_LED, GPIO_IN); /* disable led output */
+}
 
 /*
  * UART
@@ -339,7 +427,9 @@ void main()
     uint32_t tmp;
 
     /* init */
+    jtag_init();
     uart_init();
+    debug_init();
 
     /* get some default values */
     __asm__ volatile("mrs %0, cpsr" : "=r"(tmp));

@@ -53,6 +53,21 @@ For information about the programmer, see programmer/README.rst
 
 A simple bare metal program for testing is included, see testload/README.rst.
 
+JTAG
+----
+
+On RPi2 JTAG signals are initially turned off and must be enabled by configuring GPIO.
+Hence to use a JTAG debugger you first need to program the board.
+The bootloader solves this annoying "chicken and the egg" problem for you by configuring
+the GPIO pins to JTAG mode.
+
+There are some other issues with JTAG on RPi2, refer to these resources for more information:
+
+* https://github.com/guancio/kth-on-rpi2/blob/master/rpi2-port/Guide/Guide.pdf
+* https://github.com/dwelch67/raspberrypi/tree/master/armjtag/rpi2
+* https://gist.github.com/tonosaman/62a31e7991a41edb19c5
+* http://sysprogs.com/VisualKernel/tutorials/raspberry/jtagsetup
+
 Technical details
 -----------------
 
