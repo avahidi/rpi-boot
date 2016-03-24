@@ -97,15 +97,82 @@ int cmd_read(struct context *p, char *data, int len)
     return 0;
 }
 
+#define COPY_LENGTH 28
+
+int upload_file(struct context *p, uint32_t adr)
+{
+    char buffer[COPY_LENGTH];
+    int n, total, seen, currp, lastp;
+
+    fseek(p->fp, 0, SEEK_END);
+    total = ftell(p->fp);
+
+    fseek(p->fp, 0, SEEK_SET);
+    cmd_set_adr(p, adr);
+
+    for(lastp = -1, seen = 0; !feof(p->fp) ; ) {
+        n = fread(buffer, 1, COPY_LENGTH, p->fp);
+        if(n == 0)
+            return 1;
+        else if(n < 0)
+            return 0;
+
+        if(!cmd_write(p, buffer, n))
+            return 0;
+
+        seen += n;
+        currp = seen * 100 /  total;
+        if(currp != lastp || n != COPY_LENGTH) {
+            lastp = currp;
+            printf("WRITE  %08x (%d %%)   \r", adr + seen, currp);
+            fflush(stdout);
+        }
+    }
+    printf("\n");
+}
+
+int verify_file(struct context *p, uint32_t adr)
+{
+    char buffer0[COPY_LENGTH];
+    char buffer1[COPY_LENGTH];
+    int n, total, seen, currp, lastp;
+
+    fseek(p->fp, 0, SEEK_END);
+    total = ftell(p->fp);
+
+    fseek(p->fp, 0, SEEK_SET);
+    cmd_set_adr(p, adr);
+
+    for(lastp = -1, seen = 0; !feof(p->fp) ; ) {
+        n = fread(buffer0, 1, COPY_LENGTH, p->fp);
+        if(n == 0)
+            return 1;
+        else if(n < 0)
+            return 0;
+
+        if(!cmd_read(p, buffer1, n))
+            return 0;
+
+        if(!memcpy(buffer0, buffer1 + 1, n))
+            return 0;
+
+        seen += n;
+        currp = seen * 100 /  total;
+        if(currp != lastp || n != COPY_LENGTH) {
+            lastp = currp;
+            printf("VERIFY %08x (%d %%)   \r", adr + seen, currp);
+            fflush(stdout);
+        }
+    }
+    printf("\n");
+}
+
 int process_file(struct context *p)
 {
-#define COPY_LENGTH 28
-    char bufferw[COPY_LENGTH];
-    char bufferr[COPY_LENGTH];
     char *id;
-    uint32_t adr0, adr;
-    int i, n;
+    uint32_t adr0;
 
+    adr0 = p->adr;
     id = cmd_id(p);
     if(id) {
         printf("Connected to '%s'...\n", id);
@@ -114,38 +181,17 @@ int process_file(struct context *p)
         return 0;
     }
 
-
-    cmd_set_adr(p, adr0 = adr = p->adr);
-
-    while(!feof(p->fp)) {
-
-        n = fread(bufferw, 1, COPY_LENGTH, p->fp);
-        if(n <= 0) break;
-        if(!cmd_write(p, bufferw, n))
-            return 0;
-
-        /* verify it */
-        if(p->verify) {
-            if(!cmd_set_adr(p, adr)) {
-                fprintf(stderr, "set_adr failed\n");
-                return 0;
-            }
-            if(!cmd_read(p, bufferr, n)) {
-                fprintf(stderr, "read failed\n");
-                return 0;
-            }
-            if(!memcpy(bufferw, bufferr + 1, n)) {
-                fprintf(stderr, "readback failed\n");
-                return 0;
-            }
-        }
-
-        printf(" %08x   \r", adr);
-        fflush(stdout);
-        adr += n;
+    if(!upload_file(p, adr0)) {
+        fprintf(stderr, "Upload file failed!\n");
+        return 0;
     }
 
-    printf("\n");
+    if(p->verify) {
+        if(!verify_file(p, adr0)) {
+            fprintf(stderr, "Verify file failed!\n");
+            return 0;
+        }
+    }
 
     if(!p->dontrun) {
         printf("Starting at 0x%08x (options=%02x) ...\n",
