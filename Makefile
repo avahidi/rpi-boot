@@ -23,9 +23,5 @@ test: all
 openocd:
 	make -C jtag openocd
 
-jlink:
-	make -C jtag jlink
-
-gdb:
-	make -C testload # ensure testload is updated since this is what we will upload
+gdb: all
 	make -C jtag gdb
