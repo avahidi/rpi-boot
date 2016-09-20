@@ -147,8 +147,15 @@ void debug_init()
 
         /* toggle LED */
         gpio_set(GPIO_LED, i & 1);
+
+        /* say something */
+        uart_write(i & 1 ?  '-' : '_');
+
     }
     gpio_sel(GPIO_LED, GPIO_IN); /* disable led output */
+    uart_write('\r'); /* end line */
+    uart_write('\n');
+
 }
 
 /*

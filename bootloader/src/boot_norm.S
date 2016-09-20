@@ -7,11 +7,13 @@
 
     /*
      * This is the normal boot initialization code.
-     * It is placed somewhere around 0x800 because it for some reason
-     * doesn't work anywhere else due to undocumented boot ROM operation.
      *
-     * A very personal note: stupidies like this is why we need the
-     * ARM Trused Firmware project. Standard boot is the only way to go!
+     * Since we don't have any real protection mechanisms it could be placed
+     * right after the TrustZone boot code. But the GPU bootloader uses the
+     * area after 0x100 for the devicetree so this code was moved to ~2048.
+     *
+     * This behavior is not very well documented and demonstrates why we
+     * need the ARM Trusted Firmware project.
      */
 
 __vectors:

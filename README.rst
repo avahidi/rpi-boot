@@ -34,7 +34,7 @@ For a quick start
  #. insert working sdcard with the correct partitions (e.g. Raspbian)
  #. "make copy" (assuming Ubuntu 15.04 or higher)
  #. insert sdcard into RPi2 and switch power on
- #. connect RPi2 UART0 to /dev/ttyUSB0
+ #. connect RPi2 UART0 to /dev/ttyUSB0 (or equivalent)
  #. "make upload"
  #. Now if you change the testload project, you only need to power cycles and run "make upload" again to test your new code.
 

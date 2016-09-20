@@ -6,10 +6,12 @@
 
     /*
      * This is the secure boot monitor and initialization code.
-     * It has to fit somewhere below 0x100 (we choose 0xEC) otherwise it
-     * will get overwritten by unknown and undocumented stuff.
+     * It has to fit somewhere below 0x100 (we choose 0xEC) otherwise it may
+     * get overwritten by whatever DTB the GPU bootloader sees fit to load.
      *
-     * ( Yes, Eben Upton lied to you. Raspberry Pi is not open. )
+     *
+     * NOTE: this code is not secure. In fact, the primary design objective
+     *       was to be insecure.
      */
 
 __secvectors:

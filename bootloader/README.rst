@@ -25,11 +25,11 @@ Memory layout
 +---------------+----------------+--------------------+
 | 0x1000-0x8000 | *UNUSED*       |                    |
 +---------------+----------------+--------------------+
-| 0x0800-0x1000 | bootloader     |                    |
+| 0x0800-0x1000 | bootloader     | normal mode        |
 +---------------+----------------+--------------------+
-| 0x0100-0x0800 | RPi2 internal  | modified by GPU    |
+| 0x0100-0x0800 | devicetree?    | modified by GPU    |
 +---------------+----------------+--------------------+
-| 0x0000-0x0100 | secure boot    |                    |
+| 0x0000-0x0100 | secure boot    | monitor mode       |
 +---------------+----------------+--------------------+
 
 If no other instructions are given user code is assumed to start 0x8000.
@@ -73,7 +73,7 @@ Note that
  #. Each field except data is a single byte long
  #. The checksum is the additive inverse, i.e. the sum of all elements including the checksum should be zero.
  #. The length field includes data and the checksum.
- #. Data order is LSB first ( e.g. 0x123 is represented as [0x23, 0x01] )
+ #. Data order is LSB first ( e.g. 0x0123 is represented as [0x23, 0x01] )
 
 Valid commands are
 
