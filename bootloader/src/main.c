@@ -31,6 +31,12 @@ struct pl011 {
     uint32_t fbrd;
     uint32_t lcr;
     uint32_t cr;
+
+    uint32_t ifls;
+    uint32_t imsc;
+    uint32_t ris;
+    uint32_t mis;
+    uint32_t icr;
     /* ... */
 };
 
@@ -84,6 +90,9 @@ struct proto_handler {
 uint8_t uart_sum = 0;
 uint32_t cpu0_psr = 0x1D3;
 
+/* forward references */
+void uart_write(int c);
+
 /*
  * GPIO
  */
@@ -133,7 +142,6 @@ void jtag_init()
 
 void debug_init()
 {
-    volatile struct gpio *_gpio = (struct gpio *) GPIO_BASE;
     int i;
     uint32_t tmp;
 
@@ -172,6 +180,10 @@ void uart_init()
     _pl011->ibrd = div >> 6;
     _pl011->fbrd = div & 63;
     _pl011->lcr = 0x0070; /* 8bit, 1 stop, no parities */
+    /* no interrupts */
+    _pl011->imsc = 0;
+    _pl011->icr = -1;
+
     _pl011->cr = 0x0301; /* enable */
 }
 
@@ -233,7 +245,7 @@ void proto_sync(struct proto *p); /* forward */
 
 int proto_read(struct proto *p)
 {
-    int i, c;
+    int i;
     uint8_t sum;
 
     p->cnt ++;
@@ -267,7 +279,7 @@ int proto_read(struct proto *p)
     return sum == 0;
 }
 
-void proto_write(int okay, uint8_t *data, int data_len)
+void proto_write(int okay, const uint8_t *data, int data_len)
 {
     int i;
     uart_sum = 0;
@@ -303,13 +315,13 @@ void proto_sync(struct proto *p)
         if(c == '\n' || c == '\r') break;
     }
 
-    proto_write(1, "SYNC", 4);
+    proto_write(1, (uint8_t *)"SYNC", 4);
 }
 
 /* the handlers */
 void proto_handle_about(struct proto *p)
 {
-    proto_write(1, "minipi bootld.", 14);
+    proto_write(1, (uint8_t *)"minipi bootld.", 14);
 }
 
 void proto_handle_write(struct proto *p)
@@ -397,7 +409,7 @@ struct proto_handler handlers[] = {
 
 void proto_handle(struct proto *p)
 {
-    int i, len, cmd;
+    int len, cmd;
     struct proto_handler *h;
     /* data length, cmd excluded */
     len = p->len;
@@ -430,7 +442,6 @@ void proto_handle(struct proto *p)
 void main()
 {
     struct proto p;
-    int i, e;
     uint32_t tmp;
 
     /* init */

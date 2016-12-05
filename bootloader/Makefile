@@ -9,7 +9,7 @@ BOOT ?= /media/$(USER)/boot
 CFLAGS += -mcpu=cortex-a7
 #CFLAGS += -mcpu=arm1176jz-s
 
-CFLAGS += -std=c99 -T $(LD)
+CFLAGS += -std=c99 -T $(LD) -Wall -Werror
 CFLAGS += -nostartfiles -nostdlib -ffreestanding -Os -fno-common
 
 
@@ -54,4 +54,3 @@ build:
 
 clean:
 	rm -rf build
-
