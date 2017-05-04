@@ -14,3 +14,8 @@ openocd:
 gdb:
 	@$(CROSS_COMPILE)gdb -x gdb_upload.cmd ../testload/build/testload.elf
 #	-killall openocd
+
+
+break:
+	@$(CROSS_COMPILE)gdb -x gdb_break.cmd
+
