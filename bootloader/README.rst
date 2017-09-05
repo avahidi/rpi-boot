@@ -1,8 +1,8 @@
 
-The mini-Pi bootloader
-======================
+The rpi-boot bootloader
+=======================
 
-This is the mini-pi bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7).
+This is the rpi-boot bootloader, a minimal serial bootloader for RPi2 (quad Cortex-A7).
 It was designed with simplicity in mind.
 
 

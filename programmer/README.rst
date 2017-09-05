@@ -1,7 +1,7 @@
-The mini-Pi programmer
-======================
+The rpi-boot programmer
+=======================
 
-The mini-Pi programmer is a minimal serial programmer for the mini-Pi bootloader.
+The rpi-boot programmer is a minimal serial programmer for the rpi-boot bootloader.
 
 
 Usage

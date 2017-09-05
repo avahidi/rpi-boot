@@ -1,8 +1,8 @@
 
-The mini-Pi testload
-====================
+The rpi-boot testload
+=====================
 
-This is a test program for the mini-Pi bootloader. It demonstrate the following items
+This is a test program for the rpi-boot bootloader. It demonstrate the following items
 
  #. Bare metal compilation (see the Makefile)
  #. Minimal bare metal boot on ARMv7-A (see src/boot.S)
