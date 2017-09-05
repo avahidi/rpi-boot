@@ -1,51 +1,51 @@
 
-mini-Pi bootloader
-==================
+rpi-boot bootloader
+===================
 
-The mini-pi bootloader is a minimal serial bootloader for loading the initial bare metal code into Raspberry-Pi 2.
+Rpi-boot is a minimal serial bootloader for loading the initial bare metal code into Raspberry-Pi 2.
 It supports booting into the normal & **secure world** as well as the **hypervisor mode**.
 
 Who should use this?
 --------------------
 
-People who are experimenting with bare metal code.
+People who are experimenting with bare metal code and ...
 
- 1. You need a simple way to write and run baremetal normal/secure world or hypervisor mode code.
- 2. You don't have access to a JTAG debugger/programmer and you are getting tired of the SD-card juggling.
+* Need a simple way to write and run bare metal normal/secure world or hypervisor mode code.
+* Don't have access to a JTAG debugger/programmer and you are getting tired of the SD-card juggling.
 
 **Who should not use this?**
 
- 1. Practically everybody ;)
- 2. If you are running Linux you don't need this
- 3. If you are running u-boot you have a much more powerful tool and won't need this either
- 4. If your code is too large for serial download you can't use mini-pi
+#. Practically everybody ;)
+#. If you are running Linux you don't need this
+#. If you are running u-boot you have a much more powerful tool and won't need this either
+#. If your code is too large for serial download you can't use rpi-boot
 
 
 Usage
 -----
 The project structure is
 
- * bootloader/ - this is the minimal bootloader that should be written to your sdcard
- * programmer/ - this is the PC side software for uploading your bare metal code
- * testload/ - this is an example bare metal project (LED blink for RPi2, to be exact)
+* bootloader/ - this is the minimal bootloader that should be written to your sdcard
+* programmer/ - this is the PC side software for uploading your bare metal code
+* testload/ - this is an example bare metal project (LED blink for RPi2, to be exact)
 
 For a quick start
 
- #. insert working sdcard with the correct partitions (e.g. Raspbian)
- #. "make copy" (assuming Ubuntu 15.04 or higher)
- #. insert sdcard into RPi2 and switch power on
- #. connect RPi2 UART0 to /dev/ttyUSB0 (or equivalent)
- #. "make upload"
- #. Now if you change the testload project, you only need to power cycles and run "make upload" again to test your new code.
+#. insert working sdcard with the correct partitions (e.g. Raspbian)
+#. "make copy" (assuming Ubuntu 15.04 or higher)
+#. insert sdcard into RPi2 and switch power on
+#. connect RPi2 UART0 to /dev/ttyUSB0 (or equivalent)
+#. "make upload"
+#. Now if you change the testload project, you only need to power cycles and run "make upload" again to test your new code.
 
 
 If you want to copy the bootloader manually, this is what you need to do
 
-  #. "make"  (build the project)
-  #. copy bootloader/build/bootld.img to the boot partition as kernel7.img
-  #. rename old kernel7.img to kernel7.img_OLD (repeat for kernel.img)
-  #. add "kernel_old=1" to config.txt on the same partition.
-  #. comment out any lines starting with "kernel=" in the same file
+#. "make"  (build the project)
+#. copy bootloader/build/bootld.img to the boot partition as kernel7.img
+#. rename old kernel7.img to kernel7.img_OLD (repeat for kernel.img)
+#. add "kernel_old=1" to config.txt on the same partition.
+#. comment out any lines starting with "kernel=" in the same file
 
 The programmer
 --------------
